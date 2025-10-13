@@ -28,3 +28,35 @@ Elle permet de déposer un fichier audio (par exemple un cours de trois heures) 
 - JavaScript / HTML / CSS → Interface web interactive  
 - Markdown → Documentation du projet  
 
+```mermaid
+erDiagram
+    UTILISATEUR ||--o{ AUDIO : "importe"
+    AUDIO ||--|| TRANSCRIPTION : "transcrit"
+    TRANSCRIPTION ||--|| ANALYSE : "analysé en"
+
+    UTILISATEUR {
+        int id
+        string nom
+        string email
+    }
+
+    AUDIO {
+        int id
+        string titre
+        string fichier
+        date date_upload
+        string duree
+    }
+
+    TRANSCRIPTION {
+        int id
+        text contenu
+    }
+
+    ANALYSE {
+        int id
+        text resume
+        text questions
+        text actions
+    }
+```
