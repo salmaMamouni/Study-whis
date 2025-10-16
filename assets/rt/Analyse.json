@@ -1,0 +1,41 @@
+{
+    "o:label": "Analyse",
+    "o:resource_template_property": [
+        {
+            "o:alternate_label": null,
+            "o:alternate_comment": null,
+            "o:is_required": false,
+            "o:is_private": false,
+            "o:default_lang": null,
+            "data_types": [],
+            "vocabulary_namespace_uri": "https:\/\/studywhis.univ-paris8.fr\/onto\/sw#",
+            "vocabulary_label": "Study-Whis",
+            "local_name": "resume",
+            "label": "R\u00e9sum\u00e9 automatique"
+        },
+        {
+            "o:alternate_label": null,
+            "o:alternate_comment": null,
+            "o:is_required": false,
+            "o:is_private": false,
+            "o:default_lang": null,
+            "data_types": [],
+            "vocabulary_namespace_uri": "https:\/\/studywhis.univ-paris8.fr\/onto\/sw#",
+            "vocabulary_label": "Study-Whis",
+            "local_name": "questions",
+            "label": "Questions cl\u00e9s"
+        },
+        {
+            "o:alternate_label": null,
+            "o:alternate_comment": null,
+            "o:is_required": false,
+            "o:is_private": false,
+            "o:default_lang": null,
+            "data_types": [],
+            "vocabulary_namespace_uri": "https:\/\/studywhis.univ-paris8.fr\/onto\/sw#",
+            "vocabulary_label": "Study-Whis",
+            "local_name": "analyseDe",
+            "label": "Analyse de"
+        }
+    ]
+}
