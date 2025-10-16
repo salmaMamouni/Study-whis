@@ -10,7 +10,7 @@
 
 
 <https://studywhis.univ-paris8.fr/onto/sw#> a owl:Ontology ;
-    dcterms:title "Study-Whis"@fr ;
+    dcterms:title "Study-Whis"@fr .
    
 
 sw:Etudiant a rdfs:Class ;
