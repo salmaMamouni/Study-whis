@@ -1,0 +1,93 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vs: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix o: <http://omeka.org/s/vocab#> .
+@prefix ma: <http://www.w3.org/ns/ma-ont#> .
+@prefix sw: <https://studywhis.univ-paris8.fr/onto/sw#> .
+
+
+<https://studywhis.univ-paris8.fr/onto/sw#> a owl:Ontology ;
+    dcterms:title "Study-Whis"@fr ;
+   
+
+sw:Etudiant a rdfs:Class ;
+    rdfs:label "Étudiant"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:Audio a rdfs:Class ;
+    rdfs:label "Audio"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:Transcription a rdfs:Class ;
+    rdfs:label "Transcription"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:Analyse a rdfs:Class ;
+    rdfs:label "Analyse"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+sw:nom a rdf:Property ;
+    rdfs:label "Nom de l’étudiant"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:email a rdf:Property ;
+    rdfs:label "Email de l’étudiant"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:titre a rdf:Property ;
+    rdfs:label "Titre du cours"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:fichier a rdf:Property ;
+    rdfs:label "Nom du fichier audio"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:dateUpload a rdf:Property ;
+    rdfs:label "Date d’ajout"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:duree a rdf:Property ;
+    rdfs:label "Durée de l’audio"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:importePar a rdf:Property ;
+    rdfs:label "Importé par"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:contenu a rdf:Property ;
+    rdfs:label "Texte transcrit"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:transcritDe a rdf:Property ;
+    rdfs:label "Transcrit depuis"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:resume a rdf:Property ;
+    rdfs:label "Résumé automatique"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:questions a rdf:Property ;
+    rdfs:label "Questions clés"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
+
+sw:analyseDe a rdf:Property ;
+    rdfs:label "Analyse de"@fr ;
+    rdfs:domain o:Resource ;
+    vs:term_status "experimental" .
