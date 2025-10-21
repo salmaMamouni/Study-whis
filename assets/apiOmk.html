@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>API Omeka S – Study-Whis</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 30px auto;
+      line-height: 1.6;
+    }
+    h1 { color: #1363DF; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, button {
+      margin: 5px 0;
+      padding: 8px;
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      cursor: pointer;
+      background: #1363DF;
+      color: white;
+      border: none;
+    }
+    pre {
+      background: #f6f6f6;
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Omeka S – Study-Whis</h1>
+
+  <label>URL de l’API :
+    <input id="baseUrl" value="http://localhost/omeka-s/api">
+  </label>
+
+  <label>key_identity :
+    <input id="keyId" placeholder="Colle ici ta clé identity">
+  </label>
+
+  <label>key_credential :
+    <input id="keyCred" placeholder="Colle ici ta clé credential">
+  </label>
+
+  <button onclick="listItems()">📜 Lister les Items</button>
+  <button onclick="createAudio()">🎧 Créer un Item Audio</button>
+
+  <pre id="result">Résultat...</pre>
+
+  <script>
+    // Fonction pour construire l’URL complète de l’API avec authentification
+    function api(url) {
+      const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
+      const keyId = document.getElementById('keyId').value.trim();
+      const keyCred = document.getElementById('keyCred').value.trim();
+      const sep = url.includes('?') ? '&' : '?';
+      const auth = keyId && keyCred ? `${sep}key_identity=${keyId}&key_credential=${keyCred}` : '';
+      return `${base}${url}${auth}`;
+    }
+
+    // Lister tous les items
+    async function listItems() {
+      const res = await fetch(api('/items'));
+      const data = await res.json();
+      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Créer un nouvel item de type "Audio"
+    async function createAudio() {
+      const body = {
+        "o:resource_class": { "o:term": "sw:Audio" },
+        "o:resource_template": { "o:label": "Audio" },
+        "dcterms:title": [{ "@value": "Démo API – Study-Whis", "@language": "fr" }]
+      };
+      const res = await fetch(api('/items'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
