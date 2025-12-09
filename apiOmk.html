@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<title>StudyWhis - Omeka-S</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+	<link rel="stylesheet" href="./assets/css/recorder.css">
+	<style>
+		:root {
+			--primary: #0d6efd;
+			--muted: #6c757d;
+			--bg-soft: #f8f9fb;
+		}
+
+		body { background: var(--bg-soft); }
+		.header-brand h1 { font-size: 1.4rem; margin: 0; }
+		.header-brand p { margin: 0; color: var(--muted); }
+		.status-message { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; background: #eef2f7; border-left: 4px solid var(--muted); font-size: 0.95rem; }
+		.status-message.success { border-color: #28a745; background: #e9f7ef; }
+		.status-message.error { border-color: #dc3545; background: #fdecee; }
+		.status-message.warning { border-color: #ffc107; background: #fff8e5; }
+		.status-message.info { border-color: #0dcaf0; background: #e8f8ff; }
+		.status-message i { font-size: 1.1rem; }
+		.spinner-sm { width: 1rem; height: 1rem; border: 0.15em solid rgba(0,0,0,0.1); border-top-color: var(--primary); border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite; }
+		@keyframes spin { to { transform: rotate(360deg); } }
+		.auth-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 0.9rem; }
+		.auth-badge.authenticated { background: #e9f7ef; color: #198754; border: 1px solid #198754; }
+		.auth-badge.unauthenticated { background: #fdecee; color: #dc3545; border: 1px solid #dc3545; }
+		.resource-item { padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 8px; cursor: pointer; }
+		.resource-item:hover { background: #f6f8fb; }
+		footer { text-align: center; padding: 16px 0; color: var(--muted); font-size: 0.9rem; }
+	</style>
+</head>
+<body>
+	<div class="container py-4">
+		<header class="d-flex justify-content-between align-items-center mb-3">
+			<div class="header-brand">
+				<h1>StudyWhis</h1>
+				<p class="small">Omeka-S intégré</p>
+			</div>
+			<div class="d-flex align-items-center gap-2">
+				<span id="authBadge" class="auth-badge unauthenticated"><i class="bi bi-x-circle"></i> Offline</span>
+				<span id="authUserDisplay" class="text-muted small">Non connecté</span>
+				<button id="authBtn" class="btn btn-light btn-sm"><i class="bi bi-lock"></i> Connexion</button>
+			</div>
+		</header>
+
+		<div id="statusMessages" class="mb-3"></div>
+
+		<ul class="nav nav-tabs mb-4">
+			<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#uploadPanel"><i class="bi bi-file-earmark-audio"></i> Nouveau</button></li>
+			<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#resourcesPanel"><i class="bi bi-list"></i> Ressources</button></li>
+			<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#analysesPanel"><i class="bi bi-lightbulb"></i> Analyses</button></li>
+			<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#statsPanel"><i class="bi bi-bar-chart"></i> Statistiques</button></li>
+			<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#settingsPanel"><i class="bi bi-gear"></i> Paramètres</button></li>
+		</ul>
+
+		<div class="tab-content">
+
+			<!-- UPLOAD -->
+			<div class="tab-pane fade show active" id="uploadPanel">
+				<div class="row g-3">
+					<div class="col-md-6">
+						<div class="card">
+							<div class="card-header"><i class="bi bi-file-earmark-audio"></i> Créer Ressource</div>
+							<div class="card-body">
+								<form id="uploadForm">
+									<div class="form-group mb-3">
+										<label class="form-label">Fichier Audio</label>
+										<input type="file" class="form-control" id="audioFile" accept="audio/*" required>
+										<small class="text-muted">MP3, WAV, OGG...</small>
+									</div>
+									<div class="form-group mb-3">
+										<label class="form-label">Titre du Cours</label>
+										<input type="text" class="form-control" id="courseTitle" placeholder="Ex: Introduction à l'IA" required>
+									</div>
+									<div class="form-group mb-3">
+										<label class="form-label">Description</label>
+										<textarea class="form-control" id="courseDescription" rows="2" placeholder="Brève description..."></textarea>
+									</div>
+									<div class="form-group mb-3">
+										<label class="form-label">Langue</label>
+										<select class="form-select" id="language">
+											<option value="fr">Français</option>
+											<option value="en">Anglais</option>
+											<option value="es">Espagnol</option>
+										</select>
+									</div>
+									<button type="submit" class="btn btn-primary w-100">
+										<i class="bi bi-play-circle"></i> Générer Ressource
+									</button>
+								</form>
+								<div id="uploadResult" class="mt-3" style="display:none;"></div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="card h-100">
+							<div class="card-header"><i class="bi bi-arrow-right-circle"></i> Processus</div>
+							<div class="card-body">
+								<div style="line-height: 2;">
+									<div>1️⃣ Upload fichier audio</div>
+									<div>↓</div>
+									<div>2️⃣ Transcription (Whisper/Ollama)</div>
+									<div>↓</div>
+									<div>3️⃣ Résumé automatique (Ollama)</div>
+									<div>↓</div>
+									<div>4️⃣ Questions pédagogiques</div>
+									<div>↓</div>
+									<div>5️⃣ Création items Omeka-S</div>
+									<div>↓</div>
+									<div>6️⃣ ✓ Indexation complète</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- RESSOURCES -->
+			<div class="tab-pane fade" id="resourcesPanel">
+				<div class="row g-3">
+					<div class="col-md-7">
+						<div class="card">
+							<div class="card-header">
+								<div class="d-flex justify-content-between align-items-center">
+									<span><i class="bi bi-list"></i> Ressources Omeka-S</span>
+									<button class="btn btn-light btn-sm" id="loadResourcesBtn">
+										<i class="bi bi-arrow-repeat"></i> Recharger
+									</button>
+								</div>
+							</div>
+							<div class="card-body">
+								<div id="resourcesList" class="mt-3">
+									<p class="text-muted text-center">Cliquez sur "Recharger" pour charger les ressources...</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-5">
+						<div class="card">
+							<div class="card-header">
+								<i class="bi bi-file-text"></i> Détails Analyse
+							</div>
+							<div class="card-body" id="analysisDetailPanel">
+								<p class="text-muted text-center">Sélectionnez une ressource pour voir les détails d'analyse</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- ANALYSES -->
+			<div class="tab-pane fade" id="analysesPanel">
+				<div class="card">
+					<div class="card-header">
+						<div class="d-flex justify-content-between align-items-center">
+							<span><i class="bi bi-lightbulb"></i> Résultats d'Analyse</span>
+							<button class="btn btn-light btn-sm" id="loadAnalysesBtn">
+								<i class="bi bi-arrow-repeat"></i> Recharger
+							</button>
+						</div>
+					</div>
+					<div class="card-body">
+						<div id="analysesList" class="mt-3">
+							<p class="text-muted text-center">Cliquez sur "Recharger" pour charger les analyses...</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- STATS -->
+			<div class="tab-pane fade" id="statsPanel">
+				<div class="row mb-4 g-3">
+					<div class="col-md-4">
+						<div class="card">
+							<div class="card-body stat-card text-center">
+								<h3 id="countAudio" class="text-secondary">0</h3>
+								<p>Audios</p>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4">
+						<div class="card">
+							<div class="card-body stat-card text-center">
+								<h3 id="countTranscription" class="text-success">0</h3>
+								<p>Transcriptions</p>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4">
+						<div class="card">
+							<div class="card-body stat-card text-center">
+								<h3 id="countAnalysis" class="text-warning">0</h3>
+								<p>Analyses</p>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="card">
+					<div class="card-header"><i class="bi bi-info-circle"></i> État du Système</div>
+					<div class="card-body">
+						<table class="table table-sm">
+							<tr>
+								<td><strong>Omeka-S API:</strong></td>
+								<td id="omekaSatus">
+									<span class="badge bg-warning">
+										<span class="spinner-sm"></span> Vérification...
+									</span>
+								</td>
+							</tr>
+							<tr>
+								<td><strong>Ollama IA:</strong></td>
+								<td id="ollamaStatus">
+									<span class="badge bg-warning">
+										<span class="spinner-sm"></span> Vérification...
+									</span>
+								</td>
+							</tr>
+							<tr>
+								<td><strong>Modèle Ollama:</strong></td>
+								<td id="ollamaModelDisplay">
+									<span class="badge bg-info">
+										<i class="bi bi-robot"></i> <span id="currentModel">Chargement...</span>
+									</span>
+									<small class="text-muted ms-2" id="modelSource">(depuis Omeka-S)</small>
+								</td>
+							</tr>
+							<tr>
+								<td><strong>Authentification:</strong></td>
+								<td id="authStatus">
+									<span class="badge bg-danger">Non connecté</span>
+								</td>
+							</tr>
+							<tr>
+								<td><strong>Utilisateur:</strong></td>
+								<td id="currentUser">Pas de session</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<!-- PARAMÈTRES -->
+			<div class="tab-pane fade" id="settingsPanel">
+				<div class="row g-3">
+					<div class="col-md-6">
+						<div class="card">
+							<div class="card-header"><i class="bi bi-gear"></i> Configuration Omeka-S</div>
+							<div class="card-body">
+								<div class="form-group mb-3">
+									<label class="form-label">URL API</label>
+									<input type="text" class="form-control" id="apiUrl" readonly>
+								</div>
+								<div class="form-group mb-3">
+									<label class="form-label">Email</label>
+									<input type="email" class="form-control" id="apiEmail" readonly>
+								</div>
+								<div class="form-group mb-3">
+									<label class="form-label">Vocabulaire Study-Whis</label>
+									<input type="text" class="form-control" value="sw" readonly>
+								</div>
+								<div class="form-group mb-0">
+									<label class="form-label">Langue Défaut</label>
+									<input type="text" class="form-control" value="Français" readonly>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="card">
+							<div class="card-header"><i class="bi bi-robot"></i> Configuration Ollama</div>
+							<div class="card-body">
+								<div class="form-group mb-3">
+									<label class="form-label">Endpoint</label>
+									<input type="text" class="form-control" id="ollamaUrl" readonly>
+								</div>
+								<div class="form-group mb-3">
+									<label class="form-label">Modèle</label>
+									<input type="text" class="form-control" id="ollamaModelName" value="gpt-oss:120b-cloud" readonly>
+								</div>
+								<div class="form-group mb-3">
+									<label class="form-label">Max Tokens</label>
+									<input type="number" class="form-control" value="500" readonly>
+								</div>
+								<div class="form-group mb-0">
+									<label class="form-label">Température</label>
+									<input type="text" class="form-control" value="0.7" readonly>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<footer>
+		<p>StudyWhis v2.0 | Omeka-S Intégré | Modules JS | ResumeCours Active | 2025</p>
+	</footer>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	<script type="module">
+		import { auth } from './modules/auth.js';
+		import { studyWhisAPI } from './modules/studyWhisAPI.js';
+		import { swParams } from './modules/authParams.js';
+		import { loader } from './modules/loader.js';
+
+		let authInstance = null;
+		let swApiInstance = null;
+		const loaderInstance = new loader();
+
+		// ========== UTILITAIRES ==========
+		function showMessage(message, type = 'info', icon = 'info-circle') {
+			const container = document.getElementById('statusMessages');
+			const msgEl = document.createElement('div');
+			msgEl.className = `status-message ${type}`;
+			msgEl.innerHTML = `<i class="bi bi-${icon}"></i> <span>${message}</span>`;
+			container.appendChild(msgEl);
+			setTimeout(() => msgEl.remove(), 5000);
+		}
+
+		function updateAuthUI(authenticated, user = null) {
+			const badge = document.getElementById('authBadge');
+			const authUserDisplay = document.getElementById('authUserDisplay');
+			const authBtn = document.getElementById('authBtn');
+			const authStatusBadge = document.getElementById('authStatus');
+
+			if (authenticated && user) {
+				badge.className = 'auth-badge authenticated';
+				badge.innerHTML = '<i class="bi bi-check-circle"></i> Online';
+				authUserDisplay.textContent = user['o:name'] || 'Connecté';
+				authBtn.innerHTML = '<i class="bi bi-box-arrow-left"></i> Déconnexion';
+				authBtn.classList.add('btn-danger');
+				authBtn.classList.remove('btn-light');
+				authStatusBadge.innerHTML = '<span class="badge bg-success">✓ Connecté</span>';
+				document.getElementById('currentUser').textContent = user['o:name'] || 'Utilisateur';
+			} else {
+				badge.className = 'auth-badge unauthenticated';
+				badge.innerHTML = '<i class="bi bi-x-circle"></i> Offline';
+				authUserDisplay.textContent = 'Non connecté';
+				authBtn.innerHTML = '<i class="bi bi-lock"></i> Connexion';
+				authBtn.classList.remove('btn-danger');
+				authBtn.classList.add('btn-light');
+				authStatusBadge.innerHTML = '<span class="badge bg-danger">✗ Non connecté</span>';
+				document.getElementById('currentUser').textContent = 'Pas de session';
+			}
+		}
+
+		function testOmekaSConnection() {
+			const statusEl = document.getElementById('omekaSatus');
+			fetch(`${swParams.apiOmk}users?key_identity=${swParams.ident}&key_credential=${swParams.key}`)
+				.then(r => {
+					statusEl.innerHTML = r.ok 
+						? '<span class="badge bg-success">✓ Connecté</span>'
+						: '<span class="badge bg-danger">✗ Erreur ' + r.status + '</span>';
+				})
+				.catch(() => statusEl.innerHTML = '<span class="badge bg-danger">✗ Impossible</span>');
+		}
+
+		function testOllamaConnection() {
+			const statusEl = document.getElementById('ollamaStatus');
+			fetch(`${swParams.ollamaEndpoint}tags`)
+				.then(r => statusEl.innerHTML = r.ok 
+					? '<span class="badge bg-success">✓ Online</span>'
+					: '<span class="badge bg-danger">✗ Erreur ' + r.status + '</span>')
+				.catch(() => statusEl.innerHTML = '<span class="badge bg-danger">✗ Offline</span>');
+		}
+
+		// ========== INITIALISATION ==========
+		function initAuth() {
+			try {
+				authInstance = new auth({
+					navbar: null,
+					apiOmk: swParams.apiOmk,
+					mail: swParams.mail,
+					ident: swParams.ident,
+					key: swParams.key
+				});
+
+				checkAuth();
+				document.getElementById('authBtn').addEventListener('click', toggleAuth);
+				
+				// Config display
+				document.getElementById('apiUrl').value = swParams.apiOmk;
+				document.getElementById('apiEmail').value = swParams.mail;
+				document.getElementById('ollamaUrl').value = swParams.ollamaEndpoint;
+				
+				// Test connections
+				testOmekaSConnection();
+				testOllamaConnection();
+
+			} catch (error) {
+				console.error('Auth init error:', error);
+				showMessage('Erreur d\'initialisation', 'error', 'exclamation-circle');
+			}
+		}
+
+		function checkAuth() {
+			if (!authInstance) return;
+			authInstance.getUser(function(user) {
+				if (user) {
+					updateAuthUI(true, user);
+					swApiInstance = new studyWhisAPI(authInstance.omk);
+					loadStats();
+					
+					// Afficher le modèle Ollama configuré
+					setTimeout(() => {
+						const model = swApiInstance.getOllamaModel();
+						if (model) {
+							const modelDisplay = document.getElementById('ollamaModelDisplay');
+							const modelInput = document.getElementById('ollamaModelName');
+							if (modelDisplay) modelDisplay.textContent = model;
+							if (modelInput) modelInput.value = model;
+							console.log('🤖 Modèle Ollama actif:', model);
+						}
+					}, 500);
+				} else {
+					updateAuthUI(false);
+				}
+			});
+		}
+
+		function toggleAuth() {
+			if (authInstance?.user) {
+				authInstance.logout();
+				updateAuthUI(false);
+				swApiInstance = null;
+			} else {
+				checkAuth();
+			}
+		}
+
+		// ========== UPLOAD & CRÉATION ==========
+		document.getElementById('uploadForm').addEventListener('submit', function(e) {
+			e.preventDefault();
+
+			if (!swApiInstance) {
+				showMessage('Connectez-vous d\'abord', 'error', 'exclamation-circle');
+				return;
+			}
+
+			loaderInstance.show();
+			const resultDiv = document.getElementById('uploadResult');
+
+			const data = {
+				titre: document.getElementById('courseTitle').value,
+				description: document.getElementById('courseDescription').value,
+				fichier: document.getElementById('audioFile').files[0].name,
+				duree: '0',
+				transcription: '[Traitement...]',
+				resume: '[En cours...]',
+				questions: '[En cours...]',
+				langue: document.getElementById('language').value,
+				niveau: 'undergraduate'
+			};
+
+			swApiInstance.createFullResource(data, function(result) {
+				loaderInstance.hide();
+				if (result && result.success) {
+					resultDiv.innerHTML = `
+						<div class="status-message success">
+							<i class="bi bi-check-circle"></i>
+							<div>
+								<strong>✓ Ressource créée!</strong><br>
+								<small>Audio ID: <code>${result.audioId}</code></small>
+							</div>
+						</div>`;
+					document.getElementById('uploadForm').reset();
+					loadStats();
+					showMessage('Ressource créée avec succès', 'success', 'check-circle');
+				} else {
+					resultDiv.innerHTML = `<div class="status-message error"><strong>✗ Erreur de création</strong></div>`;
+					showMessage('Erreur lors de la création', 'error', 'exclamation-circle');
+				}
+				resultDiv.style.display = 'block';
+			});
+		});
+
+		document.getElementById('loadResourcesBtn').addEventListener('click', loadResources);
+
+		function loadResources() {
+			if (!swApiInstance) {
+				showMessage('Connectez-vous d\'abord', 'error', 'exclamation-circle');
+				return;
+			}
+
+			loaderInstance.show();
+			const resourcesList = document.getElementById('resourcesList');
+
+			swApiInstance.getAllAudios(function(audios) {
+				loaderInstance.hide();
+				if (audios && audios.length > 0) {
+					let html = '';
+					audios.slice(0, 20).forEach(audio => {
+						const title = audio['dcterms:title']?.[0]?.['@value'] || 'Sans titre';
+						const id = audio['o:id'];
+						html += `
+							<div class="resource-item" onclick="window.displayAnalysisDetails(${id}, '${title.replace(/'/g, "\\'")}')">
+								<strong>${title}</strong>
+								<br><small>ID: ${id} | Type: Audio</small>
+							</div>`;
+					});
+					resourcesList.innerHTML = html || '<p class="text-muted">Aucune ressource</p>';
+				} else {
+					resourcesList.innerHTML = '<p class="text-muted text-center">Aucune ressource trouvée</p>';
+				}
+			});
+		}
+
+		// Affiche les détails d'analyse d'une ressource
+		window.displayAnalysisDetails = function(audioId, audioTitle) {
+			if (!swApiInstance) return;
+
+			const panel = document.getElementById('analysisDetailPanel');
+			panel.innerHTML = '<div class="text-center"><span class="spinner-sm"></span> Chargement...</div>';
+
+			swApiInstance.getFullResource(audioId, function(resource) {
+				let html = `<h5>${audioTitle}</h5><hr>`;
+
+				if (resource.audio) {
+					html += `
+						<div class="mb-3">
+							<h6 class="text-secondary"><i class="bi bi-file-earmark-audio"></i> Audio</h6>
+							<p class="small">${resource.audio['dcterms:title']?.[0]?.['@value'] || 'Sans titre'}</p>
+						</div>`;
+				}
+
+				if (resource.transcription) {
+					const content = resource.transcription['sw:contenu']?.[0]?.['@value'] || '';
+					html += `
+						<div class="mb-3">
+							<h6 class="text-secondary"><i class="bi bi-file-text"></i> Transcription</h6>
+							<p class="small" style="max-height: 150px; overflow-y: auto; border-left: 2px solid #3498db; padding-left: 10px;">
+								${content.substring(0, 500)}${content.length > 500 ? '...' : ''}
+							</p>
+						</div>`;
+				}
+
+				if (resource.analyse) {
+					const resume = resource.analyse['sw:resume']?.[0]?.['@value'] || 'Non disponible';
+					const questions = resource.analyse['sw:questions']?.[0]?.['@value'] || 'Non disponible';
+					
+					html += `
+						<div class="mb-3">
+							<h6 class="text-success"><i class="bi bi-lightbulb"></i> Résumé</h6>
+							<p class="small" style="max-height: 120px; overflow-y: auto; background: #f0f8ff; padding: 10px; border-radius: 4px;">
+								${resume}
+							</p>
+						</div>
+						<div class="mb-3">
+							<h6 class="text-warning"><i class="bi bi-question-circle"></i> Questions Pédagogiques</h6>
+							<p class="small" style="max-height: 150px; overflow-y: auto; background: #fffaf0; padding: 10px; border-radius: 4px; white-space: pre-wrap;">
+								${questions}
+							</p>
+						</div>`;
+				} else {
+					html += '<p class="text-muted"><i class="bi bi-info-circle"></i> Aucune analyse disponible</p>';
+				}
+
+				panel.innerHTML = html;
+			});
+		};
+
+		function loadStats() {
+			if (!swApiInstance) return;
+
+			swApiInstance.getAllAudios(function(audios) {
+				document.getElementById('countAudio').textContent = audios?.length || 0;
+			});
+
+			swApiInstance.getAllTranscriptions(function(transcriptions) {
+				document.getElementById('countTranscription').textContent = transcriptions?.length || 0;
+			});
+
+			swApiInstance.getAllAnalyses(function(analyses) {
+				document.getElementById('countAnalysis').textContent = analyses?.length || 0;
+			});
+		}
+
+		// ========== VÉRIFICATION EMAIL ==========
+		document.getElementById('verifyEmailBtn')?.addEventListener('click', function() {
+			const emailInput = document.getElementById('userEmailInput');
+			const resultDiv = document.getElementById('emailVerificationResult');
+			const email = emailInput.value.trim();
+
+			if (!email) {
+				resultDiv.innerHTML = '<div class="status-message error"><i class="bi bi-x-circle"></i> Veuillez entrer un email</div>';
+				return;
+			}
+
+			if (!swApiInstance) {
+				resultDiv.innerHTML = '<div class="status-message error"><i class="bi bi-x-circle"></i> API non initialisée</div>';
+				return;
+			}
+
+			loaderInstance.show();
+			resultDiv.innerHTML = '<div class="status-message info"><span class="spinner-sm"></span> Vérification en cours...</div>';
+
+			// Rechercher l'utilisateur dans Omeka
+			fetch(swParams.apiOmk + 'users?email=' + encodeURIComponent(email), {
+				headers: {
+					'key_identity': swParams.ident,
+					'key_credential': swParams.key
+				}
+			})
+			.then(response => response.json())
+			.then(users => {
+				loaderInstance.hide();
+				if (users && users.length > 0) {
+					const user = users[0];
+					const userName = user['o:name'] || 'Utilisateur';
+					const userRole = user['o:role'] || 'N/A';
+					resultDiv.innerHTML = `
+						<div class="status-message success">
+							<i class="bi bi-check-circle"></i>
+							<div>
+								<strong>✓ Utilisateur trouvé dans Omeka!</strong><br>
+								<small>Nom: ${userName}</small><br>
+								<small>Email: ${email}</small><br>
+								<small>Rôle: ${userRole}</small>
+							</div>
+						</div>`;
+					showMessage('Utilisateur vérifié avec succès', 'success', 'check-circle');
+				} else {
+					resultDiv.innerHTML = `
+						<div class="status-message warning">
+							<i class="bi bi-exclamation-triangle"></i>
+							<div>
+								<strong>⚠ Email non trouvé</strong><br>
+								<small>Cet email n'existe pas dans Omeka-S</small>
+							</div>
+						</div>`;
+					showMessage('Email introuvable dans Omeka', 'warning', 'exclamation-triangle');
+				}
+			})
+			.catch(error => {
+				loaderInstance.hide();
+				console.error('Erreur vérification email:', error);
+				resultDiv.innerHTML = `
+					<div class="status-message error">
+						<i class="bi bi-x-circle"></i>
+						<strong>✗ Erreur de vérification</strong><br>
+						<small>${error.message}</small>
+					</div>`;
+			});
+		});
+
+		// ========== CHARGEMENT ANALYSES ==========
+		document.getElementById('loadAnalysesBtn')?.addEventListener('click', function() {
+			if (!swApiInstance) {
+				showMessage('Connectez-vous d\'abord', 'error', 'exclamation-circle');
+				return;
+			}
+
+			loaderInstance.show();
+			const analysesList = document.getElementById('analysesList');
+
+			swApiInstance.getAllAnalyses(function(analyses) {
+				loaderInstance.hide();
+				if (analyses && analyses.length > 0) {
+					let html = '<div class="row">';
+					analyses.forEach(analyse => {
+						const titre = analyse['dcterms:title']?.[0]?.['@value'] || 'Sans titre';
+						const resume = analyse['sw:resume']?.[0]?.['@value'] || 'Pas de résumé';
+						const questions = analyse['sw:questions']?.[0]?.['@value'] || 'Pas de questions';
+						const id = analyse['o:id'];
+
+						html += `
+							<div class="col-md-6 mb-3">
+								<div class="card">
+									<div class="card-header bg-success text-white">
+										<strong>${titre}</strong>
+										<small class="float-end">ID: ${id}</small>
+									</div>
+									<div class="card-body">
+										<h6 class="text-success"><i class="bi bi-lightbulb"></i> Résumé</h6>
+										<p class="small" style="max-height: 100px; overflow-y: auto; background: #f0f8ff; padding: 8px; border-radius: 4px;">
+											${resume}
+										</p>
+										<h6 class="text-warning mt-3"><i class="bi bi-question-circle"></i> Questions</h6>
+										<p class="small" style="max-height: 100px; overflow-y: auto; background: #fffaf0; padding: 8px; border-radius: 4px; white-space: pre-wrap;">
+											${questions}
+										</p>
+									</div>
+								</div>
+							</div>`;
+					});
+					html += '</div>';
+					analysesList.innerHTML = html;
+				} else {
+					analysesList.innerHTML = '<p class="text-muted text-center">Aucune analyse trouvée</p>';
+				}
+			});
+		});
+
+		window.addEventListener('load', initAuth);
+	</script>
+</body>
+</html>
